@@ -80,7 +80,7 @@ installboot sd0
 sysmerge
 ```
 
-## Update firmware
+## Update Firmware
 
 ```
 fw_update
@@ -94,13 +94,13 @@ shutdown -r now
 
 ## Cleanup
 
-## Update packages
+## Update Packages
 
 ```
 pkg_add -Uui
 ```
 
-## Update configuration
+## Update Configuration
 
 ```
 syspatch

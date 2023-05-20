@@ -80,7 +80,7 @@ installboot sd0
 sysmerge
 ```
 
-## Update firmware
+## Update Firmware
 
 ```
 fw_update
@@ -101,13 +101,13 @@ rm -rf /usr/X11R6/lib/libdmx.* \
       /usr/X11R6/man/man3/DMX*.3
 ```
 
-## Update packages
+## Update Packages
 
 ```
 pkg_add -Uui
 ```
 
-## Update configuration
+## Update Configuration
 
 ```
 syspatch

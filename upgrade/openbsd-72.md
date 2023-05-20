@@ -80,7 +80,7 @@ installboot sd0
 sysmerge
 ```
 
-## Update firmware
+## Update Firmware
 
 ```
 fw_update
@@ -106,13 +106,13 @@ rm -f /etc/rc.d/switchd \
       /usr/share/man/man8/switchd.8
 ```
 
-## Update packages
+## Update Packages
 
 ```
 pkg_add -Uui
 ```
 
-## Update configuration
+## Update Configuration
 
 ```
 syspatch

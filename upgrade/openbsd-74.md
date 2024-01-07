@@ -1,119 +1,134 @@
 # OpenBSD 7.4 Upgrade
 
-## Download
+# Upgrade
 
-```
-rm -rf /usr/rel/
-mkdir -p /usr/rel/
-cd /usr/rel/
+- Start a `tmux` session in case of connectivity issues
 
-wget http://ftp.openbsd.org/pub/OpenBSD/7.4/amd64/SHA256
-wget http://ftp.openbsd.org/pub/OpenBSD/7.4/amd64/SHA256.sig
-wget http://ftp.openbsd.org/pub/OpenBSD/7.4/amd64/base74.tgz
-wget http://ftp.openbsd.org/pub/OpenBSD/7.4/amd64/bsd
-wget http://ftp.openbsd.org/pub/OpenBSD/7.4/amd64/bsd.mp
-wget http://ftp.openbsd.org/pub/OpenBSD/7.4/amd64/bsd.rd
-wget http://ftp.openbsd.org/pub/OpenBSD/7.4/amd64/man74.tgz
+  ```
+  tmux
+  ```
 
-signify -C -p /etc/signify/openbsd-74-base.pub -x SHA256.sig base74.tgz
-signify -C -p /etc/signify/openbsd-74-base.pub -x SHA256.sig bsd
-signify -C -p /etc/signify/openbsd-74-base.pub -x SHA256.sig bsd.mp
-signify -C -p /etc/signify/openbsd-74-base.pub -x SHA256.sig bsd.rd
-signify -C -p /etc/signify/openbsd-74-base.pub -x SHA256.sig man74.tgz
-```
+- Download kernel and base archive
 
-## Kernel
+  ```
+  rm -rf /usr/rel/
+  mkdir -p /usr/rel/
+  cd /usr/rel/
 
-### Single Processor
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.4/amd64/SHA256
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.4/amd64/SHA256.sig
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.4/amd64/base74.tgz
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.4/amd64/bsd
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.4/amd64/bsd.mp
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.4/amd64/bsd.rd
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.4/amd64/man74.tgz
 
-```
-cd /usr/rel
-ln -f /bsd /obsd && \cp bsd /nbsd && \mv /nbsd /bsd
-\cp bsd.rd bsd.mp /
-```
+  signify -C -p /etc/signify/openbsd-74-base.pub -x SHA256.sig base74.tgz
+  signify -C -p /etc/signify/openbsd-74-base.pub -x SHA256.sig bsd
+  signify -C -p /etc/signify/openbsd-74-base.pub -x SHA256.sig bsd.mp
+  signify -C -p /etc/signify/openbsd-74-base.pub -x SHA256.sig bsd.rd
+  signify -C -p /etc/signify/openbsd-74-base.pub -x SHA256.sig man74.tgz
+  ```
 
-### Multiprocessor Processor
+- Replace kernel
 
-```
-cd /usr/rel
-ln -f /bsd /obsd && \cp bsd.mp /nbsd && \mv /nbsd /bsd
-\cp bsd.rd /
-\cp bsd /bsd.sp
-```
+> [!NOTE]
+> Single Processor
 
-## KARL
+  ```
+  cd /usr/rel
+  ln -f /bsd /obsd && \cp bsd /nbsd && \mv /nbsd /bsd
+  \cp bsd.rd bsd.mp /
+  ```
 
-```
-sha256 -h /var/db/kernel.SHA256 /bsd
-```
+> [!NOTE]
+> Multiprocessor Processor
 
-## Userland
+  ```
+  cd /usr/rel
+  ln -f /bsd /obsd && \cp bsd.mp /nbsd && \mv /nbsd /bsd
+  \cp bsd.rd /
+  \cp bsd /bsd.sp
+  ```
 
-```
-\cp /sbin/reboot /sbin/oreboot
-tar -C / -xzphf man74.tgz
-tar -C / -xzphf base74.tgz
-```
+- Enable KARL
 
-## Reboot
+  ```
+  sha256 -h /var/db/kernel.SHA256 /bsd
+  ```
 
-```
-/sbin/oreboot
-```
+- Update userland
 
-## System and Device Files
+  ```
+  \cp /sbin/reboot /sbin/oreboot
+  tar -C / -xzphf man74.tgz
+  tar -C / -xzphf base74.tgz
+  ```
 
-```
-cd /dev
-./MAKEDEV all
-```
+- Reboot
 
-## Bootloader
+  ```
+  /sbin/oreboot
+  ```
 
-```
-installboot sd0
-```
+- Start a `tmux` session in case of connectivity issues
 
-## Update System
+  ```
+  tmux
+  ```
 
-```
-sysmerge
-```
+- Update dev
 
-## Update Firmware
+  ```
+  cd /dev
+  ./MAKEDEV all
+  ```
 
-```
-fw_update
-```
+- Update bootloader
 
-## Reboot
+  ```
+  installboot sd0
+  ```
 
-```
-shutdown -r now
-```
+- Update system configuration files
 
-## Cleanup
+  ```
+  sysmerge
+  ```
 
-## Update Packages
+- Update firmware
 
-```
-pkg_add -Uui
-```
+  ```
+  fw_update
+  ```
 
-## Update Configuration
+- Update packages
 
-```
-syspatch
-```
+  ```
+  pkg_add -Uui
+  ```
 
-## Update Python
+- Apply system binary patches
 
-```
-pkg_add python3
-```
+  ```
+  syspatch
+  ```
 
-## Reboot
+- Run Ansible playbook to ensure correct configuration
 
-```
-shutdown -r now
-```
+  ```
+  ansible-playbook all.yml --limit=<fqdn>
+  ansible-playbook firewall.yml --limit=<fqdn>
+  ```
+
+- Reboot system
+
+  ```
+  sleep 3 && shutdown -r now
+  ```
+
+- Inspect logs
+
+  ```
+  grep -IirE "fatal|emerg|alert|crit|err|warn|corrupt|fail" /var/log/
+  ```

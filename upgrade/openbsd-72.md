@@ -1,131 +1,149 @@
 # OpenBSD 7.2 Upgrade
 
-## Download
+# Upgrade
 
-```
-rm -rf /usr/rel/
-mkdir -p /usr/rel/
-cd /usr/rel/
+- Start a `tmux` session in case of connectivity issues
 
-wget http://ftp.openbsd.org/pub/OpenBSD/7.2/amd64/SHA256
-wget http://ftp.openbsd.org/pub/OpenBSD/7.2/amd64/SHA256.sig
-wget http://ftp.openbsd.org/pub/OpenBSD/7.2/amd64/base72.tgz
-wget http://ftp.openbsd.org/pub/OpenBSD/7.2/amd64/bsd
-wget http://ftp.openbsd.org/pub/OpenBSD/7.2/amd64/bsd.mp
-wget http://ftp.openbsd.org/pub/OpenBSD/7.2/amd64/bsd.rd
-wget http://ftp.openbsd.org/pub/OpenBSD/7.2/amd64/man72.tgz
+  ```
+  tmux
+  ```
 
-signify -C -p /etc/signify/openbsd-72-base.pub -x SHA256.sig base72.tgz
-signify -C -p /etc/signify/openbsd-72-base.pub -x SHA256.sig bsd
-signify -C -p /etc/signify/openbsd-72-base.pub -x SHA256.sig bsd.mp
-signify -C -p /etc/signify/openbsd-72-base.pub -x SHA256.sig bsd.rd
-signify -C -p /etc/signify/openbsd-72-base.pub -x SHA256.sig man72.tgz
-```
+- Download kernel and base archive
 
-## Kernel
+  ```
+  rm -rf /usr/rel/
+  mkdir -p /usr/rel/
+  cd /usr/rel/
 
-### Single Processor
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.2/amd64/SHA256
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.2/amd64/SHA256.sig
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.2/amd64/base72.tgz
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.2/amd64/bsd
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.2/amd64/bsd.mp
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.2/amd64/bsd.rd
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.2/amd64/man72.tgz
 
-```
-cd /usr/rel
-ln -f /bsd /obsd && \cp bsd /nbsd && \mv /nbsd /bsd
-\cp bsd.rd bsd.mp /
-```
+  signify -C -p /etc/signify/openbsd-72-base.pub -x SHA256.sig base72.tgz
+  signify -C -p /etc/signify/openbsd-72-base.pub -x SHA256.sig bsd
+  signify -C -p /etc/signify/openbsd-72-base.pub -x SHA256.sig bsd.mp
+  signify -C -p /etc/signify/openbsd-72-base.pub -x SHA256.sig bsd.rd
+  signify -C -p /etc/signify/openbsd-72-base.pub -x SHA256.sig man72.tgz
+  ```
 
-### Multiprocessor Processor
+- Replace kernel
 
-```
-cd /usr/rel
-ln -f /bsd /obsd && \cp bsd.mp /nbsd && \mv /nbsd /bsd
-\cp bsd.rd /
-\cp bsd /bsd.sp
-```
+> [!NOTE]
+> Command differs on single and multi processor system
 
-## KARL
+- Replace kernel on single processor system
 
-```
-sha256 -h /var/db/kernel.SHA256 /bsd
-```
+  ```
+  cd /usr/rel
+  ln -f /bsd /obsd && \cp bsd /nbsd && \mv /nbsd /bsd
+  \cp bsd.rd bsd.mp /
+  ```
 
-## Userland
+- Replace kernel on multi processor system
 
-```
-\cp /sbin/reboot /sbin/oreboot
-tar -C / -xzphf man72.tgz
-tar -C / -xzphf base72.tgz
-```
+  ```
+  cd /usr/rel
+  ln -f /bsd /obsd && \cp bsd.mp /nbsd && \mv /nbsd /bsd
+  \cp bsd.rd /
+  \cp bsd /bsd.sp
+  ```
 
-## Reboot
+- Enable KARL
 
-```
-/sbin/oreboot
-```
+  ```
+  sha256 -h /var/db/kernel.SHA256 /bsd
+  ```
 
-## System and Device Files
+- Update userland
 
-```
-cd /dev
-./MAKEDEV all
-```
+  ```
+  \cp /sbin/reboot /sbin/oreboot
+  tar -C / -xzphf man72.tgz
+  tar -C / -xzphf base72.tgz
+  ```
 
-## Bootloader
+- Reboot
 
-```
-installboot sd0
-```
+  ```
+  /sbin/oreboot
+  ```
 
-## Update System
+- Start a `tmux` session in case of connectivity issues
 
-```
-sysmerge
-```
+  ```
+  tmux
+  ```
 
-## Update Firmware
+- Update dev
 
-```
-fw_update
-```
+  ```
+  cd /dev
+  ./MAKEDEV all
+  ```
 
-## Reboot
+- Update bootloader
 
-```
-shutdown -r now
-```
+  ```
+  installboot sd0
+  ```
 
-## Cleanup
+- Update system configuration files
 
-```
-userdel _switchd
-groupdel _switchd
-rm -f /etc/rc.d/switchd \
-      /usr/sbin/switchctl \
-      /usr/sbin/switchd \
-      /usr/share/man/man4/switch.4 \
-      /usr/share/man/man5/switchd.conf.5 \
-      /usr/share/man/man8/switchctl.8 \
-      /usr/share/man/man8/switchd.8
-```
+  ```
+  sysmerge
+  ```
 
-## Update Packages
+- Update firmware
 
-```
-pkg_add -Uui
-```
+  ```
+  fw_update
+  ```
 
-## Update Configuration
+- Remove obsolete files
 
-```
-syspatch
-```
+  ```
+  userdel _switchd
+  groupdel _switchd
+  rm -f /etc/rc.d/switchd \
+        /usr/sbin/switchctl \
+        /usr/sbin/switchd \
+        /usr/share/man/man4/switch.4 \
+        /usr/share/man/man5/switchd.conf.5 \
+        /usr/share/man/man8/switchctl.8 \
+        /usr/share/man/man8/switchd.8
+  ```
 
-## Update Python
+- Update packages
 
-```
-pkg_add python3
-```
+  ```
+  pkg_add -Uui
+  ```
 
-## Reboot
+- Apply system binary patches
 
-```
-shutdown -r now
-```
+  ```
+  syspatch
+  ```
+
+- Run Ansible playbook to ensure correct configuration
+
+  ```
+  ansible-playbook all.yml --limit=<fqdn>
+  ansible-playbook firewall.yml --limit=<fqdn>
+  ```
+
+- Reboot system
+
+  ```
+  sleep 3 && shutdown -r now
+  ```
+
+- Inspect logs
+
+  ```
+  grep -IirE "fatal|emerg|alert|crit|err|warn|corrupt|fail" /var/log/
+  ```

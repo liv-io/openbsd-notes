@@ -1,119 +1,135 @@
 # OpenBSD 7.3 Upgrade
 
-## Download
+# Upgrade
 
-```
-rm -rf /usr/rel/
-mkdir -p /usr/rel/
-cd /usr/rel/
+- Start a `tmux` session in case of connectivity issues
 
-wget http://ftp.openbsd.org/pub/OpenBSD/7.3/amd64/SHA256
-wget http://ftp.openbsd.org/pub/OpenBSD/7.3/amd64/SHA256.sig
-wget http://ftp.openbsd.org/pub/OpenBSD/7.3/amd64/base73.tgz
-wget http://ftp.openbsd.org/pub/OpenBSD/7.3/amd64/bsd
-wget http://ftp.openbsd.org/pub/OpenBSD/7.3/amd64/bsd.mp
-wget http://ftp.openbsd.org/pub/OpenBSD/7.3/amd64/bsd.rd
-wget http://ftp.openbsd.org/pub/OpenBSD/7.3/amd64/man73.tgz
+  ```
+  tmux
+  ```
 
-signify -C -p /etc/signify/openbsd-73-base.pub -x SHA256.sig base73.tgz
-signify -C -p /etc/signify/openbsd-73-base.pub -x SHA256.sig bsd
-signify -C -p /etc/signify/openbsd-73-base.pub -x SHA256.sig bsd.mp
-signify -C -p /etc/signify/openbsd-73-base.pub -x SHA256.sig bsd.rd
-signify -C -p /etc/signify/openbsd-73-base.pub -x SHA256.sig man73.tgz
-```
+- Download kernel and base archive
 
-## Kernel
+  ```
+  rm -rf /usr/rel/
+  mkdir -p /usr/rel/
+  cd /usr/rel/
 
-### Single Processor
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.3/amd64/SHA256
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.3/amd64/SHA256.sig
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.3/amd64/base73.tgz
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.3/amd64/bsd
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.3/amd64/bsd.mp
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.3/amd64/bsd.rd
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.3/amd64/man73.tgz
 
-```
-cd /usr/rel
-ln -f /bsd /obsd && \cp bsd /nbsd && \mv /nbsd /bsd
-\cp bsd.rd bsd.mp /
-```
+  signify -C -p /etc/signify/openbsd-73-base.pub -x SHA256.sig base73.tgz
+  signify -C -p /etc/signify/openbsd-73-base.pub -x SHA256.sig bsd
+  signify -C -p /etc/signify/openbsd-73-base.pub -x SHA256.sig bsd.mp
+  signify -C -p /etc/signify/openbsd-73-base.pub -x SHA256.sig bsd.rd
+  signify -C -p /etc/signify/openbsd-73-base.pub -x SHA256.sig man73.tgz
+  ```
 
-### Multiprocessor Processor
+- Replace kernel
 
-```
-cd /usr/rel
-ln -f /bsd /obsd && \cp bsd.mp /nbsd && \mv /nbsd /bsd
-\cp bsd.rd /
-\cp bsd /bsd.sp
-```
+> [!NOTE]
+> Command differs on single and multi processor system
 
-## KARL
+- Replace kernel on single processor system
 
-```
-sha256 -h /var/db/kernel.SHA256 /bsd
-```
+  ```
+  cd /usr/rel
+  ln -f /bsd /obsd && \cp bsd /nbsd && \mv /nbsd /bsd
+  \cp bsd.rd bsd.mp /
+  ```
 
-## Userland
+- Replace kernel on multi processor system
 
-```
-\cp /sbin/reboot /sbin/oreboot
-tar -C / -xzphf man73.tgz
-tar -C / -xzphf base73.tgz
-```
+  ```
+  cd /usr/rel
+  ln -f /bsd /obsd && \cp bsd.mp /nbsd && \mv /nbsd /bsd
+  \cp bsd.rd /
+  \cp bsd /bsd.sp
+  ```
 
-## Reboot
+- Enable KARL
 
-```
-/sbin/oreboot
-```
+  ```
+  sha256 -h /var/db/kernel.SHA256 /bsd
+  ```
 
-## System and Device Files
+- Update userland
 
-```
-cd /dev
-./MAKEDEV all
-```
+  ```
+  \cp /sbin/reboot /sbin/oreboot
+  tar -C / -xzphf man73.tgz
+  tar -C / -xzphf base73.tgz
+  ```
 
-## Bootloader
+- Reboot
 
-```
-installboot sd0
-```
+  ```
+  /sbin/oreboot
+  ```
 
-## Update System
+- Start a `tmux` session in case of connectivity issues
 
-```
-sysmerge
-```
+  ```
+  tmux
+  ```
 
-## Update Firmware
+- Update dev
 
-```
-fw_update
-```
+  ```
+  cd /dev
+  ./MAKEDEV all
+  ```
 
-## Reboot
+- Update bootloader
 
-```
-shutdown -r now
-```
+  ```
+  installboot sd0
+  ```
 
-## Cleanup
+- Update system configuration files
 
-## Update Packages
+  ```
+  sysmerge
+  ```
 
-```
-pkg_add -Uui
-```
+- Update firmware
 
-## Update Configuration
+  ```
+  fw_update
+  ```
 
-```
-syspatch
-```
+- Update packages
 
-## Update Python
+  ```
+  pkg_add -Uui
+  ```
 
-```
-pkg_add python3
-```
+- Apply system binary patches
 
-## Reboot
+  ```
+  syspatch
+  ```
 
-```
-shutdown -r now
-```
+- Run Ansible playbook to ensure correct configuration
+
+  ```
+  ansible-playbook all.yml --limit=<fqdn>
+  ansible-playbook firewall.yml --limit=<fqdn>
+  ```
+
+- Reboot system
+
+  ```
+  sleep 3 && shutdown -r now
+  ```
+
+- Inspect logs
+
+  ```
+  grep -IirE "fatal|emerg|alert|crit|err|warn|corrupt|fail" /var/log/
+  ```

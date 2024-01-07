@@ -1,126 +1,144 @@
 # OpenBSD 7.0 Upgrade
 
-## Download
+# Upgrade
 
-```
-rm -rf /usr/rel/
-mkdir -p /usr/rel/
-cd /usr/rel/
+- Start a `tmux` session in case of connectivity issues
 
-wget http://ftp.openbsd.org/pub/OpenBSD/7.0/amd64/SHA256
-wget http://ftp.openbsd.org/pub/OpenBSD/7.0/amd64/SHA256.sig
-wget http://ftp.openbsd.org/pub/OpenBSD/7.0/amd64/base70.tgz
-wget http://ftp.openbsd.org/pub/OpenBSD/7.0/amd64/bsd
-wget http://ftp.openbsd.org/pub/OpenBSD/7.0/amd64/bsd.mp
-wget http://ftp.openbsd.org/pub/OpenBSD/7.0/amd64/bsd.rd
-wget http://ftp.openbsd.org/pub/OpenBSD/7.0/amd64/man70.tgz
+  ```
+  tmux
+  ```
 
-signify -C -p /etc/signify/openbsd-70-base.pub -x SHA256.sig base70.tgz
-signify -C -p /etc/signify/openbsd-70-base.pub -x SHA256.sig bsd
-signify -C -p /etc/signify/openbsd-70-base.pub -x SHA256.sig bsd.mp
-signify -C -p /etc/signify/openbsd-70-base.pub -x SHA256.sig bsd.rd
-signify -C -p /etc/signify/openbsd-70-base.pub -x SHA256.sig man70.tgz
-```
+- Download kernel and base archive
 
-## Kernel
+  ```
+  rm -rf /usr/rel/
+  mkdir -p /usr/rel/
+  cd /usr/rel/
 
-### Single Processor
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.0/amd64/SHA256
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.0/amd64/SHA256.sig
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.0/amd64/base70.tgz
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.0/amd64/bsd
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.0/amd64/bsd.mp
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.0/amd64/bsd.rd
+  wget http://ftp.openbsd.org/pub/OpenBSD/7.0/amd64/man70.tgz
 
-```
-cd /usr/rel
-ln -f /bsd /obsd && \cp bsd /nbsd && \mv /nbsd /bsd
-\cp bsd.rd bsd.mp /
-```
+  signify -C -p /etc/signify/openbsd-70-base.pub -x SHA256.sig base70.tgz
+  signify -C -p /etc/signify/openbsd-70-base.pub -x SHA256.sig bsd
+  signify -C -p /etc/signify/openbsd-70-base.pub -x SHA256.sig bsd.mp
+  signify -C -p /etc/signify/openbsd-70-base.pub -x SHA256.sig bsd.rd
+  signify -C -p /etc/signify/openbsd-70-base.pub -x SHA256.sig man70.tgz
+  ```
 
-### Multiprocessor Processor
+- Replace kernel
 
-```
-cd /usr/rel
-ln -f /bsd /obsd && \cp bsd.mp /nbsd && \mv /nbsd /bsd
-\cp bsd.rd /
-\cp bsd /bsd.sp
-```
+> [!NOTE]
+> Command differs on single and multi processor system
 
-## KARL
+- Replace kernel on single processor system
 
-```
-sha256 -h /var/db/kernel.SHA256 /bsd
-```
+  ```
+  cd /usr/rel
+  ln -f /bsd /obsd && \cp bsd /nbsd && \mv /nbsd /bsd
+  \cp bsd.rd bsd.mp /
+  ```
 
-## Userland
+- Replace kernel on multi processor system
 
-```
-\cp /sbin/reboot /sbin/oreboot
-tar -C / -xzphf man70.tgz
-tar -C / -xzphf base70.tgz
-```
+  ```
+  cd /usr/rel
+  ln -f /bsd /obsd && \cp bsd.mp /nbsd && \mv /nbsd /bsd
+  \cp bsd.rd /
+  \cp bsd /bsd.sp
+  ```
 
-## Reboot
+- Enable KARL
 
-```
-/sbin/oreboot
-```
+  ```
+  sha256 -h /var/db/kernel.SHA256 /bsd
+  ```
 
-## System and Device Files
+- Update userland
 
-```
-cd /dev
-./MAKEDEV all
-```
+  ```
+  \cp /sbin/reboot /sbin/oreboot
+  tar -C / -xzphf man70.tgz
+  tar -C / -xzphf base70.tgz
+  ```
 
-## Bootloader
+- Reboot
 
-```
-installboot sd0
-```
+  ```
+  /sbin/oreboot
+  ```
 
-## Update System
+- Start a `tmux` session in case of connectivity issues
 
-```
-sysmerge
-```
+  ```
+  tmux
+  ```
 
-## Update Firmware
+- Update dev
 
-```
-fw_update
-```
+  ```
+  cd /dev
+  ./MAKEDEV all
+  ```
 
-## Reboot
+- Update bootloader
 
-```
-shutdown -r now
-```
+  ```
+  installboot sd0
+  ```
 
-## Cleanup
+- Update system configuration files
 
-```
-rm -rf /usr/X11R6/lib/libdmx.* \
-      /usr/X11R6/include/X11/extensions/dmxext.h \
-      /usr/X11R6/lib/pkgconfig/dmx.pc \
-      /usr/X11R6/man/man3/DMX*.3
-```
+  ```
+  sysmerge
+  ```
 
-## Update Packages
+- Update firmware
 
-```
-pkg_add -Uui
-```
+  ```
+  fw_update
+  ```
 
-## Update Configuration
+- Remove obsolete files
 
-```
-syspatch
-```
+  ```
+  rm -rf /usr/X11R6/lib/libdmx.* \
+        /usr/X11R6/include/X11/extensions/dmxext.h \
+        /usr/X11R6/lib/pkgconfig/dmx.pc \
+        /usr/X11R6/man/man3/DMX*.3
+  ```
 
-## Update Python
+- Update packages
 
-```
-pkg_add python3
-```
+  ```
+  pkg_add -Uui
+  ```
 
-## Reboot
+- Apply system binary patches
 
-```
-shutdown -r now
-```
+  ```
+  syspatch
+  ```
+
+- Run Ansible playbook to ensure correct configuration
+
+  ```
+  ansible-playbook all.yml --limit=<fqdn>
+  ansible-playbook firewall.yml --limit=<fqdn>
+  ```
+
+- Reboot system
+
+  ```
+  sleep 3 && shutdown -r now
+  ```
+
+- Inspect logs
+
+  ```
+  grep -IirE "fatal|emerg|alert|crit|err|warn|corrupt|fail" /var/log/
+  ```

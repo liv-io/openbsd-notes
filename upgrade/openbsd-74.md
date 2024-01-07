@@ -33,7 +33,9 @@
 - Replace kernel
 
 > [!NOTE]
-> Single Processor
+> Command differs on single and multi processor system
+
+- Replace kernel on single processor system
 
   ```
   cd /usr/rel
@@ -41,8 +43,7 @@
   \cp bsd.rd bsd.mp /
   ```
 
-> [!NOTE]
-> Multiprocessor Processor
+- Replace kernel on multi processor system
 
   ```
   cd /usr/rel

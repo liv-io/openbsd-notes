@@ -118,7 +118,11 @@
 - Apply system binary patches
 
   ```
+  sed -e 's/.checkfs/#checkfs/g' /usr/sbin/syspatch > /root/syspatch
+  ksh /root/syspatch
   syspatch
+  rm -f /root/syspatch
+  dev_mkdb
   ```
 
 - Run Ansible playbook to ensure correct configuration
